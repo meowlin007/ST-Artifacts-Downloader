@@ -1,0 +1,12 @@
+{
+  "display_name": "Mobile Optimizer Pro",
+  "loading_order": 100,
+  "requires": [],
+  "optional": [],
+  "js": "index.js",
+  "css": "style.css",
+  "author": "meowlin007",
+  "version": "1.0.0",
+  "homePage": "https://github.com/meowlin007/mobile-optimizer-pro",
+  "auto_update": true
+}
