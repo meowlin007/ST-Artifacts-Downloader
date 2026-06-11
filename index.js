@@ -1,5 +1,6 @@
 // Mobile Optimizer Pro v2.0 - Complete Extension
 // Features: Auto-detect, Per-Chat, Theme Support, Export/Import, Lazy Load Profile
+// Floating Button, Prevent Keyboard Shift Mode
 
 (function () {
   'use strict';
@@ -16,6 +17,7 @@
     virtualize: true,
     threshold: 12,
     lockViewport: true,
+    preventKeyboardShift: false,
     stripAnimations: true,
     hideAvatars: false,
     lazyLoad: true,
@@ -45,9 +47,9 @@
       chatOverrides = savedOverrides ? JSON.parse(savedOverrides) : {};
     } catch (e) {
       console.error(`[${EXT_DISPLAY}] Failed to load settings:`, e);
-      settings = { ...DEFAULTS };
-      chatOverrides = {};
-    }  }
+      settings = { ...DEFAULTS };      chatOverrides = {};
+    }
+  }
 
   function saveSettings() {
     try {
@@ -64,7 +66,6 @@
 
     const startTime = performance.now();
     
-    // Simple benchmark: create and remove DOM elements
     const testDiv = document.createElement('div');
     testDiv.style.display = 'none';
     document.body.appendChild(testDiv);
@@ -95,8 +96,8 @@
     if (settings.debug) {
       console.log(`[${EXT_DISPLAY}] Device performance: ${devicePerformance} (${duration.toFixed(2)}ms)`);
     }
-
-    updatePerformanceDisplay();  }
+    updatePerformanceDisplay();
+  }
 
   function updatePerformanceDisplay() {
     const perfEl = document.getElementById('mop-device-perf');
@@ -114,7 +115,6 @@
     const themeEl = document.getElementById('mop-current-theme');
     if (!themeEl) return;
 
-    // Check for common theme indicators
     const bodyClasses = document.body.className;
     const htmlClasses = document.documentElement.className;
     
@@ -128,7 +128,6 @@
       themeName = 'AMOLED Theme';
     }
 
-    // Check for custom theme files
     const themeLinks = document.querySelectorAll('link[rel="stylesheet"]');
     themeLinks.forEach(link => {
       if (link.href.includes('theme')) {
@@ -145,15 +144,13 @@
       console.log(`[${EXT_DISPLAY}] Detected theme: ${themeName}`);
     }
   }
-  // ─── Per-Chat Settings ───────────────────────────────────────────────────────
-  function getCurrentChatId() {
-    // Try to get current chat ID from SillyTavern context
+
+  // ─── Per-Chat Settings ───────────────────────────────────────────────────────  function getCurrentChatId() {
     if (typeof SillyTavern !== 'undefined' && SillyTavern.getContext) {
       const ctx = SillyTavern.getContext();
       return ctx.chatId || null;
     }
     
-    // Fallback: check URL or DOM
     const chatElement = document.querySelector('[data-chat-id]');
     if (chatElement) {
       return chatElement.dataset.chatId;
@@ -194,10 +191,10 @@
 
   // ─── Extension Detection ─────────────────────────────────────────────────────
   function detectExtensions() {
-    extensionList = [];    
+    extensionList = [];
+    
     if (typeof SillyTavern !== 'undefined' && SillyTavern.getContext) {
-      const ctx = SillyTavern.getContext();
-      if (ctx.extensionSettings) {
+      const ctx = SillyTavern.getContext();      if (ctx.extensionSettings) {
         Object.keys(ctx.extensionSettings).forEach(extName => {
           if (extName !== EXT_ID) {
             extensionList.push({
@@ -243,10 +240,10 @@
     if (!styleEl) {
       styleEl = document.createElement('style');
       styleEl.id = 'mop-optimized-css';
-      document.head.appendChild(styleEl);    }
+      document.head.appendChild(styleEl);
+    }
 
-    let css = `
-      /* Core Performance */
+    let css = `      /* Core Performance */
       #chat {
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
@@ -261,6 +258,22 @@
         inset: 0 !important;
       }
 
+      /* Prevent Keyboard Shift Mode */
+      body.mop-prevent-shift {
+        position: fixed !important;
+        width: 100% !important;
+      }
+
+      body.mop-prevent-shift #send_form {
+        position: relative !important;
+        bottom: auto !important;
+      }
+
+      body.mop-prevent-shift #chat {
+        margin-bottom: auto !important;
+        padding-bottom: 20px !important;
+      }
+
       /* Lazy Load Profile Images */
       .mop-lazy-profile img {
         opacity: 0;
@@ -270,9 +283,54 @@
       .mop-lazy-profile img.loaded {
         opacity: 1;
       }
+
+      /* Keyboard Fix */
+      .mop-viewport-locked {
+        position: fixed !important;
+        width: 100% !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+        top: 0 !important;
+        left: 0 !important;
+      }
+      .mop-keyboard-fix #send_form,
+      .mop-keyboard-fix #chat {
+        position: relative !important;
+      }
+
+      body.mop-viewport-locked::after {
+        content: '';
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100vh;
+        background: transparent;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      body.mop-viewport-locked #send_form {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 1000 !important;
+        background: inherit !important;
+      }
+
+      body.mop-viewport-locked #chat {
+        margin-bottom: 0 !important;
+        padding-bottom: 80px !important;
+      }
+
+      @supports (-webkit-touch-callout: none) {
+        .mop-viewport-locked {
+          height: -webkit-fill-available !important;
+        }
+      }
     `;
 
-    // Aggressive CSS Stripping
     if (settings.aggressiveCss && settings.optimizedExtensions.length > 0) {
       const extSelectors = settings.optimizedExtensions.map(ext => {
         return `[id*="${ext}"], [class*="${ext}"]`;
@@ -283,8 +341,7 @@
           ${extSelectors} {
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
-            filter: none !important;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+            filter: none !important;            box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
             background-attachment: scroll !important;
           }
         `;
@@ -292,7 +349,8 @@
     }
 
     if (settings.stripAnimations) {
-      css += `        .mop-no-anim * {
+      css += `
+        .mop-no-anim * {
           animation: none !important;
           transition: none !important;
         }
@@ -325,73 +383,69 @@
 
   // ─── Viewport Lock ───────────────────────────────────────────────────────────
   function setupViewportLock() {
-  if (!settings.lockViewport) {
-    document.body.classList.remove('mop-viewport-locked');
+    const visualViewport = window.visualViewport;
+    
+    document.body.classList.remove('mop-viewport-locked', 'mop-prevent-shift');
     document.body.style.height = '';
     document.body.style.overflow = '';
-    return;
-  }
 
-  const visualViewport = window.visualViewport;
-  
-  if (!visualViewport) {
-    // Fallback สำหรับเบราว์เซอร์เก่า
-    document.body.classList.add('mop-keyboard-fix');
-    return;
-  }
-
-  let lastHeight = visualViewport.height;
-  let keyboardOpen = false;
-
-  const handleResize = () => {
-    const currentHeight = visualViewport.height;
-    const windowHeight = window.innerHeight;
-    const viewportHeight = visualViewport.height;
-    
-    // ตรวจจับว่าแป้นพิมพ์เปิดหรือไม่
-    const isKeyboardOpen = viewportHeight < windowHeight * 0.75;
-    
-    if (isKeyboardOpen !== keyboardOpen) {
-      keyboardOpen = isKeyboardOpen;
-      
-      if (keyboardOpen) {
-        // แป้นพิมพ์เปิด
-        document.body.classList.add('mop-viewport-locked');
-        document.body.style.height = `${viewportHeight}px`;
-        document.body.style.overflow = 'hidden';
-        
-        // เลื่อนลงล่างสุด
-        setTimeout(() => {
-          const chat = document.getElementById('chat');
-          if (chat) {
-            chat.scrollTop = chat.scrollHeight;
-          }
-          window.scrollTo(0, 0);
-        }, 100);
-      } else {
-        // แป้นพิมพ์ปิด
-        document.body.classList.remove('mop-viewport-locked');
-        document.body.style.height = '';
-        document.body.style.overflow = '';
+    if (!settings.lockViewport) {
+      if (window.mopViewportHandler && visualViewport) {        visualViewport.removeEventListener('resize', window.mopViewportHandler);
+        visualViewport.removeEventListener('scroll', window.mopViewportHandler);
       }
+      return;
     }
-    
-    lastHeight = currentHeight;
-  };
 
-  // ลบ event listener เก่า
-  if (window.mopViewportHandler) {
-    visualViewport.removeEventListener('resize', window.mopViewportHandler);
+    if (settings.preventKeyboardShift) {
+      document.body.classList.add('mop-prevent-shift');
+      return;
+    }
+
+    if (!visualViewport) {
+      document.body.classList.add('mop-keyboard-fix');
+      return;
+    }
+
+    let keyboardOpen = false;
+
+    const handleResize = () => {
+      const viewportHeight = visualViewport.height;
+      const windowHeight = window.innerHeight;
+      const isKeyboardOpen = viewportHeight < windowHeight * 0.75;
+      
+      if (isKeyboardOpen !== keyboardOpen) {
+        keyboardOpen = isKeyboardOpen;
+        
+        if (keyboardOpen) {
+          document.body.classList.add('mop-viewport-locked');
+          document.body.style.height = `${viewportHeight}px`;
+          document.body.style.overflow = 'hidden';
+          
+          setTimeout(() => {
+            const chat = document.getElementById('chat');
+            if (chat) {
+              chat.scrollTop = chat.scrollHeight;
+            }
+            window.scrollTo(0, 0);
+          }, 100);
+        } else {
+          document.body.classList.remove('mop-viewport-locked');
+          document.body.style.height = '';
+          document.body.style.overflow = '';
+        }
+      }
+    };
+
+    if (window.mopViewportHandler) {
+      visualViewport.removeEventListener('resize', window.mopViewportHandler);
+      visualViewport.removeEventListener('scroll', window.mopViewportHandler);
+    }    
+    visualViewport.addEventListener('resize', handleResize);
+    visualViewport.addEventListener('scroll', handleResize);
+    window.mopViewportHandler = handleResize;
+    
+    handleResize();
   }
-  
-  // เพิ่ม event listener ใหม่
-  visualViewport.addEventListener('resize', handleResize);
-  visualViewport.addEventListener('scroll', handleResize);
-  window.mopViewportHandler = handleResize;
-  
-  // เรียกครั้งแรก
-  handleResize();
-}
 
   // ─── DOM Virtualization ──────────────────────────────────────────────────────
   function virtualizeChat() {
@@ -399,6 +453,7 @@
 
     const chatContainer = document.getElementById('chat');
     if (!chatContainer) return;
+
     const messages = Array.from(chatContainer.querySelectorAll('.mes'));
     const total = messages.length;
     const keep = settings.threshold;
@@ -433,7 +488,6 @@
 
     updateStats();
   }
-
   function restoreAllArchived() {
     archivedNodes.forEach((data, node) => {
       if (node.classList.contains('mop-archived')) {
@@ -448,6 +502,7 @@
     archivedNodes.clear();
     updateStats();
   }
+
   // ─── Lazy Loading ────────────────────────────────────────────────────────────
   function enforceLazyLoad() {
     if (!settings.lazyLoad) return;
@@ -463,14 +518,12 @@
   function enforceLazyLoadProfile() {
     if (!settings.lazyProfile) return;
 
-    // Target profile/avatar images
     const profileImages = document.querySelectorAll('.avatar img, .mes_avatar img, [class*="profile"] img');
     
     profileImages.forEach(img => {
       if (!img.classList.contains('mop-lazy-loaded')) {
         img.classList.add('mop-lazy-loaded');
         
-        // Use IntersectionObserver for true lazy loading
         if ('IntersectionObserver' in window) {
           const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -484,10 +537,8 @@
               }
             });
           }, { rootMargin: '50px' });
-
           observer.observe(img);
         } else {
-          // Fallback for older browsers
           img.setAttribute('loading', 'lazy');
         }
       }
@@ -497,7 +548,8 @@
   // ─── Stats Update ────────────────────────────────────────────────────────────
   function updateStats() {
     const domCount = document.querySelectorAll('*').length;
-    const archivedCount = archivedNodes.size;    const memorySaved = (archivedCount * 0.5).toFixed(1);
+    const archivedCount = archivedNodes.size;
+    const memorySaved = (archivedCount * 0.5).toFixed(1);
 
     const domEl = document.getElementById('mop-dom-count');
     const archivedEl = document.getElementById('mop-archived-count');
@@ -506,6 +558,54 @@
     if (domEl) domEl.textContent = domCount.toLocaleString();
     if (archivedEl) archivedEl.textContent = archivedCount;
     if (memoryEl) memoryEl.textContent = `${memorySaved} MB`;
+  }
+
+  // ─── Floating Button ─────────────────────────────────────────────────────────
+  function createFloatingButton() {
+    const oldBtn = document.getElementById('mop-floating-btn');
+    if (oldBtn) oldBtn.remove();
+
+    const btn = document.createElement('div');
+    btn.id = 'mop-floating-btn';
+    btn.innerHTML = '📱';
+    btn.title = 'Mobile Optimizer Pro - Click to open settings';
+    btn.style.cssText = `
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #4a9eff, #6c5ce7);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 9999;
+      box-shadow: 0 4px 12px rgba(74, 158, 255, 0.4);
+      transition: all 0.3s;
+      font-size: 24px;
+      border: 2px solid rgba(255,255,255,0.2);
+    `;
+    btn.onmouseover = () => {
+      btn.style.transform = 'scale(1.1)';
+      btn.style.boxShadow = '0 6px 16px rgba(74, 158, 255, 0.6)';
+    };
+
+    btn.onmouseout = () => {
+      btn.style.transform = 'scale(1)';
+      btn.style.boxShadow = '0 4px 12px rgba(74, 158, 255, 0.4)';
+    };
+
+    btn.onclick = () => {
+      if (typeof toastr !== 'undefined') {
+        toastr.info('Click the Extensions icon (puzzle piece) → Find "Mobile Optimizer Pro" → Click Settings', EXT_DISPLAY);
+      } else {
+        alert('Mobile Optimizer Pro:\n\n1. Click Extensions icon (puzzle piece)\n2. Find "Mobile Optimizer Pro"\n3. Click Settings icon');
+      }
+    };
+
+    document.body.appendChild(btn);
   }
 
   // ─── Export/Import ───────────────────────────────────────────────────────────
@@ -535,8 +635,7 @@
   function importSettings(file) {
     const reader = new FileReader();
     
-    reader.onload = (e) => {
-      try {
+    reader.onload = (e) => {      try {
         const data = JSON.parse(e.target.result);
         
         if (data.settings) {
@@ -546,7 +645,8 @@
         if (data.chatOverrides) {
           chatOverrides = data.chatOverrides;
         }
-                saveSettings();
+        
+        saveSettings();
         applyAll();
         
         if (typeof toastr !== 'undefined') {
@@ -579,13 +679,12 @@
   }
 
   function setupSettingsPanel(panel) {
-    // Load current settings into UI
     const fields = {
       enabled: '#mop-enabled',
       autoDetect: '#mop-auto-detect',
       virtualize: '#mop-virtualize',
       threshold: '#mop-threshold',
-      lockViewport: '#mop-lock-viewport',
+      lockViewport: '#mop-lock-viewport',      preventKeyboardShift: '#mop-prevent-shift',
       stripAnimations: '#mop-strip-animations',
       hideAvatars: '#mop-hide-avatars',
       lazyLoad: '#mop-lazy-load',
@@ -595,6 +694,7 @@
       perChat: '#mop-per-chat',
       debug: '#mop-debug'
     };
+
     Object.entries(fields).forEach(([key, selector]) => {
       const el = panel.querySelector(selector);
       if (el) {
@@ -608,7 +708,6 @@
       }
     });
 
-    // Event listeners
     const threshold = panel.querySelector('#mop-threshold');
     const thresholdValue = panel.querySelector('#mop-threshold-value');
     if (threshold && thresholdValue) {
@@ -617,7 +716,6 @@
       });
     }
 
-    // Per-chat settings
     const perChatCheckbox = panel.querySelector('#mop-per-chat');
     const chatOverridesDiv = panel.querySelector('#mop-chat-overrides');
     if (perChatCheckbox && chatOverridesDiv) {
@@ -630,14 +728,11 @@
       }
     }
 
-    // Update current chat info
     currentChatId = getCurrentChatId();
     const currentChatNameEl = panel.querySelector('#mop-current-chat-name');
     if (currentChatNameEl) {
       currentChatNameEl.textContent = currentChatId || 'Unknown';
     }
-
-    // Chat threshold slider
     const chatThreshold = panel.querySelector('#mop-chat-threshold');
     const chatThresholdValue = panel.querySelector('#mop-chat-threshold-value');
     if (chatThreshold && chatThresholdValue) {
@@ -645,10 +740,9 @@
         chatThresholdValue.textContent = chatThreshold.value;
       });
     }
-    // Extension list
+
     renderExtensionList(panel);
 
-    // Buttons
     const applyBtn = panel.querySelector('#mop-apply');
     const resetBtn = panel.querySelector('#mop-reset');
     const selectAllBtn = panel.querySelector('#mop-select-all');
@@ -688,12 +782,12 @@
 
     if (selectNoneBtn) {
       selectNoneBtn.addEventListener('click', () => {
-        panel.querySelectorAll('.mop-ext-checkbox').forEach(cb => cb.checked = false);
-      });
+        panel.querySelectorAll('.mop-ext-checkbox').forEach(cb => cb.checked = false);      });
     }
 
     if (refreshBtn) {
-      refreshBtn.addEventListener('click', () => {        detectExtensions();
+      refreshBtn.addEventListener('click', () => {
+        detectExtensions();
         renderExtensionList(panel);
       });
     }
@@ -728,7 +822,6 @@
       });
     }
 
-    // Start stats update
     if (statsInterval) clearInterval(statsInterval);
     statsInterval = setInterval(updateStats, 2000);
     updateStats();
@@ -739,10 +832,10 @@
   function renderExtensionList(panel) {
     const listEl = panel.querySelector('#mop-ext-list');
     if (!listEl) return;
-
     if (extensionList.length === 0) {
       listEl.innerHTML = '<div class="mop-loading">No extensions detected</div>';
-      return;    }
+      return;
+    }
 
     listEl.innerHTML = '';
     extensionList.forEach(ext => {
@@ -769,6 +862,7 @@
       virtualize: '#mop-virtualize',
       threshold: '#mop-threshold',
       lockViewport: '#mop-lock-viewport',
+      preventKeyboardShift: '#mop-prevent-shift',
       stripAnimations: '#mop-strip-animations',
       hideAvatars: '#mop-hide-avatars',
       lazyLoad: '#mop-lazy-load',
@@ -786,12 +880,12 @@
           settings[key] = el.checked;
         } else if (el.type === 'range') {
           settings[key] = parseInt(el.value);
-        }
-      }
+        }      }
     });
 
     settings.optimizedExtensions = [];
-    panel.querySelectorAll('.mop-ext-checkbox:checked').forEach(cb => {      settings.optimizedExtensions.push(cb.dataset.ext);
+    panel.querySelectorAll('.mop-ext-checkbox:checked').forEach(cb => {
+      settings.optimizedExtensions.push(cb.dataset.ext);
     });
 
     saveSettings();
@@ -801,7 +895,13 @@
   function applyAll() {
     if (!settings.enabled) {
       restoreAllArchived();
-      document.body.classList.remove('mop-viewport-locked', 'mop-no-anim', 'mop-hide-avatars', 'mop-lazy-profile');
+      document.body.classList.remove('mop-viewport-locked', 'mop-no-anim', 'mop-hide-avatars', 'mop-lazy-profile', 'mop-prevent-shift');
+      document.body.style.height = '';
+      document.body.style.overflow = '';
+      if (window.mopViewportHandler && window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', window.mopViewportHandler);
+        window.visualViewport.removeEventListener('scroll', window.mopViewportHandler);
+      }
       return;
     }
 
@@ -829,7 +929,6 @@
   // ─── SillyTavern Event Listeners ─────────────────────────────────────────────
   function initSTListeners() {
     if (typeof eventSource === 'undefined') return;
-
     eventSource.on('MESSAGE_RECEIVED', () => {
       setTimeout(() => {
         virtualizeChat();
@@ -840,7 +939,8 @@
 
     eventSource.on('CHAT_CHANGED', () => {
       restoreAllArchived();
-      currentChatId = getCurrentChatId();      applyChatOverride();
+      currentChatId = getCurrentChatId();
+      applyChatOverride();
       setTimeout(virtualizeChat, 200);
     });
 
@@ -858,6 +958,7 @@
       applyAll();
       initSTListeners();
       initSettingsUI();
+      createFloatingButton();
     }, 800);
   }
 
