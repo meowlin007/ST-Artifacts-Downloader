@@ -1,0 +1,419 @@
+/* Mobile Optimizer Pro v2.0 - Complete Stylesheet */
+
+/* ─── Base Container ──────────────────────────────────────────────────────────── */
+.mop-settings {
+  padding: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.mop-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.mop-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.mop-version {
+  font-size: 12px;
+  color: #888;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* ─── Section Container ───────────────────────────────────────────────────────── */
+.mop-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mop-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #4a9eff;
+}
+
+.mop-hint {  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: #888;
+  padding-left: 24px;
+}
+
+/* ─── Toggle & Checkbox ───────────────────────────────────────────────────────── */
+.mop-toggle-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.mop-checkbox {
+  width: 18px;
+  height: 18px;
+  margin-right: 10px;
+  cursor: pointer;
+  accent-color: #4a9eff;
+}
+
+.mop-setting-item {
+  margin-bottom: 16px;
+}
+
+.mop-setting-item label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.mop-label-text {
+  margin-right: 12px;
+  font-size: 14px;
+}
+
+/* ─── Slider ──────────────────────────────────────────────────────────────────── */
+.mop-slider {
+  flex: 1;
+  margin: 0 12px;
+  accent-color: #4a9eff;
+  height: 6px;
+}
+
+.mop-slider-value {
+  min-width: 30px;
+  text-align: center;  font-weight: 600;
+  color: #4a9eff;
+}
+
+/* ─── Stats Grid ──────────────────────────────────────────────────────────────── */
+.mop-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.mop-stat-item {
+  padding: 12px;
+  background: rgba(74, 158, 255, 0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(74, 158, 255, 0.2);
+}
+
+.mop-stat-label {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.mop-stat-value {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: #4a9eff;
+}
+
+/* ─── Extension List ──────────────────────────────────────────────────────────── */
+.mop-ext-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.mop-ext-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.mop-ext-item {  display: flex;
+  align-items: center;
+  padding: 8px;
+  margin-bottom: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.mop-ext-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mop-ext-item label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex: 1;
+}
+
+.mop-ext-name {
+  font-weight: 500;
+  margin-right: 8px;
+}
+
+.mop-ext-version {
+  font-size: 11px;
+  color: #888;
+}
+
+.mop-loading {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+}
+
+/* ─── Per-Chat Settings ───────────────────────────────────────────────────────── */
+.mop-chat-overrides {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mop-chat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;  flex-wrap: wrap;
+}
+
+.mop-chat-name {
+  font-size: 13px;
+  color: #888;
+}
+
+.mop-chat-value {
+  font-weight: 600;
+  color: #4a9eff;
+}
+
+.mop-chat-setting {
+  margin-top: 8px;
+}
+
+.mop-chat-setting label {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+}
+
+/* ─── Theme Support ───────────────────────────────────────────────────────────── */
+.mop-theme-value {
+  font-weight: 600;
+  color: #4a9eff;
+}
+
+/* ─── Export/Import ───────────────────────────────────────────────────────────── */
+.mop-export-import {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────────── */
+.mop-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mop-btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;}
+
+.mop-btn-primary {
+  background: #4a9eff;
+  color: white;
+}
+
+.mop-btn-primary:hover {
+  background: #3a8eef;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(74, 158, 255, 0.3);
+}
+
+.mop-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.mop-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.mop-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────────── */
+.mop-ext-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mop-ext-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.mop-ext-list::-webkit-scrollbar-thumb {
+  background: rgba(74, 158, 255, 0.3);
+  border-radius: 4px;
+}
+
+.mop-ext-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 158, 255, 0.5);
+}
+
+/* ─── Lazy Load Profile Animation ─────────────────────────────────────────────── */
+.mop-lazy-profile img {  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.mop-lazy-profile img.loaded {
+  opacity: 1;
+}
+
+/* ─── Responsive Design ───────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .mop-settings {
+    padding: 12px;
+  }
+
+  .mop-header h3 {
+    font-size: 18px;
+  }
+
+  .mop-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mop-ext-controls {
+    flex-direction: column;
+  }
+
+  .mop-btn {
+    width: 100%;
+  }
+
+  .mop-actions {
+    flex-direction: column;
+  }
+
+  .mop-chat-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ─── Dark Theme Support ──────────────────────────────────────────────────────── */
+body.dark-theme .mop-settings,
+body.dark .mop-settings {
+  color: #e0e0e0;
+}
+
+body.dark-theme .mop-section,
+body.dark .mop-section {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.1);}
+
+/* ─── Light Theme Support ─────────────────────────────────────────────────────── */
+body.light-theme .mop-settings,
+body.light .mop-settings {
+  color: #333;
+}
+
+body.light-theme .mop-section,
+body.light .mop-section {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .mop-section h4,
+body.light .mop-section h4 {
+  color: #2563eb;
+}
+
+body.light-theme .mop-stat-value,
+body.light .mop-stat-value {
+  color: #2563eb;
+}
+
+body.light-theme .mop-btn-primary,
+body.light .mop-btn-primary {
+  background: #2563eb;
+}
+
+body.light-theme .mop-btn-primary:hover,
+body.light .mop-btn-primary:hover {
+  background: #1d4ed8;
+}
+
+/* ─── AMOLED Theme Support ────────────────────────────────────────────────────── */
+body.amoled-theme .mop-settings,
+body.amoled .mop-settings {
+  color: #fff;
+}
+
+body.amoled-theme .mop-section,
+body.amoled .mop-section {
+  background: #000;
+  border-color: #222;
+}
+
+body.amoled-theme .mop-header,
+body.amoled .mop-header {
+  border-bottom-color: #222;
+}
+/* ─── Performance Indicator Colors ────────────────────────────────────────────── */
+#mop-device-perf {
+  transition: color 0.3s;
+}
+
+#mop-device-perf[data-perf="high"] {
+  color: #4ade80;
+}
+
+#mop-device-perf[data-perf="medium"] {
+  color: #fbbf24;
+}
+
+#mop-device-perf[data-perf="low"] {
+  color: #ef4444;
+}
+
+/* ─── Loading Animation ───────────────────────────────────────────────────────── */
+@keyframes mop-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.mop-loading {
+  animation: mop-pulse 1.5s ease-in-out infinite;
+}
