@@ -18,7 +18,7 @@
     threshold: 12,
     lockViewport: true,
     preventKeyboardShift: false,
-    autoShowKeyboard: false,  // เพิ่ม: false = ไม่เด้งคีย์บอร์ดอัตโนมัติ
+    autoShowKeyboard: false,
     stripAnimations: true,
     hideAvatars: false,
     lazyLoad: true,
@@ -44,10 +44,10 @@
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       settings = { ...DEFAULTS, ...(saved ? JSON.parse(saved) : {}) };
-      
       const savedOverrides = localStorage.getItem(CHAT_OVERRIDES_KEY);
       chatOverrides = savedOverrides ? JSON.parse(savedOverrides) : {};
-    } catch (e) {      console.error(`[${EXT_DISPLAY}] Failed to load settings:`, e);
+    } catch (e) {
+      console.error(`[${EXT_DISPLAY}] Failed to load settings:`, e);
       settings = { ...DEFAULTS };
       chatOverrides = {};
     }
@@ -67,20 +67,16 @@
     if (!settings.autoDetect) return;
 
     const startTime = performance.now();
-    
     const testDiv = document.createElement('div');
     testDiv.style.display = 'none';
     document.body.appendChild(testDiv);
-    
     for (let i = 0; i < 100; i++) {
       const child = document.createElement('div');
       child.textContent = 'test';
       testDiv.appendChild(child);
     }
-    
     testDiv.innerHTML = '';
     document.body.removeChild(testDiv);
-    
     const endTime = performance.now();
     const duration = endTime - startTime;
 
@@ -96,7 +92,8 @@
     }
 
     if (settings.debug) {
-      console.log(`[${EXT_DISPLAY}] Device performance: ${devicePerformance} (${duration.toFixed(2)}ms)`);    }
+      console.log(`[${EXT_DISPLAY}] Device performance: ${devicePerformance} (${duration.toFixed(2)}ms)`);
+    }
 
     updatePerformanceDisplay();
   }
@@ -105,7 +102,7 @@
     const perfEl = document.getElementById('mop-device-perf');
     if (perfEl) {
       perfEl.textContent = devicePerformance.charAt(0).toUpperCase() + devicePerformance.slice(1);
-      perfEl.style.color = devicePerformance === 'high' ? '#4ade80' : 
+      perfEl.style.color = devicePerformance === 'high' ? '#4ade80' :
                            devicePerformance === 'medium' ? '#fbbf24' : '#ef4444';
     }
   }
@@ -119,9 +116,8 @@
 
     const bodyClasses = document.body.className;
     const htmlClasses = document.documentElement.className;
-    
     let themeName = 'Default';
-    
+
     if (bodyClasses.includes('dark') || htmlClasses.includes('dark')) {
       themeName = 'Dark Theme';
     } else if (bodyClasses.includes('light') || htmlClasses.includes('light')) {
@@ -146,18 +142,17 @@
       console.log(`[${EXT_DISPLAY}] Detected theme: ${themeName}`);
     }
   }
+
   // ─── Per-Chat Settings ───────────────────────────────────────────────────────
   function getCurrentChatId() {
     if (typeof SillyTavern !== 'undefined' && SillyTavern.getContext) {
       const ctx = SillyTavern.getContext();
       return ctx.chatId || null;
     }
-    
     const chatElement = document.querySelector('[data-chat-id]');
     if (chatElement) {
       return chatElement.dataset.chatId;
     }
-    
     return null;
   }
 
@@ -168,7 +163,7 @@
     if (override) {
       settings.threshold = override.threshold || DEFAULTS.threshold;
       settings.virtualize = override.virtualize !== undefined ? override.virtualize : DEFAULTS.virtualize;
-      
+
       if (settings.debug) {
         console.log(`[${EXT_DISPLAY}] Applied chat override for ${currentChatId}:`, override);
       }
@@ -194,7 +189,8 @@
   // ─── Extension Detection ─────────────────────────────────────────────────────
   function detectExtensions() {
     extensionList = [];
-        if (typeof SillyTavern !== 'undefined' && SillyTavern.getContext) {
+
+    if (typeof SillyTavern !== 'undefined' && SillyTavern.getContext) {
       const ctx = SillyTavern.getContext();
       if (ctx.extensionSettings) {
         Object.keys(ctx.extensionSettings).forEach(extName => {
@@ -214,7 +210,6 @@
       const id = container.id || '';
       const className = container.className || '';
       const match = id.match(/ext[_-]?([a-z0-9_]+)/i) || className.match(/ext[_-]?([a-z0-9_]+)/i);
-      
       if (match && match[1]) {
         const extName = match[1].toLowerCase();
         if (!extensionList.find(e => e.name === extName)) {
@@ -244,6 +239,7 @@
       styleEl.id = 'mop-optimized-css';
       document.head.appendChild(styleEl);
     }
+
     let css = `
       /* Core Performance */
       #chat {
@@ -292,7 +288,8 @@
         width: 100% !important;
         height: 100vh !important;
         overflow: hidden !important;
-        top: 0 !important;        left: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
       }
 
       .mop-keyboard-fix #send_form,
@@ -341,7 +338,8 @@
 
     if (settings.aggressiveCss && settings.optimizedExtensions.length > 0) {
       const extSelectors = settings.optimizedExtensions.map(ext => {
-        return `[id*="${ext}"], [class*="${ext}"]`;      }).join(', ');
+        return `[id*="${ext}"], [class*="${ext}"]`;
+      }).join(', ');
 
       if (extSelectors) {
         css += `
@@ -390,8 +388,8 @@
   }
 
   // ─── Prevent Auto-focus ──────────────────────────────────────────────────────
-  function preventAutoFocus() {    if (settings.autoShowKeyboard) {
-      // Restore original focus behavior
+  function preventAutoFocus() {
+    if (settings.autoShowKeyboard) {
       if (originalFocusMethods.restore) {
         originalFocusMethods.restore();
       }
@@ -399,10 +397,8 @@
       return;
     }
 
-    // Prevent auto-focus on textarea and inputs
     document.body.classList.add('mop-no-auto-focus');
 
-    // Store original methods
     if (!originalFocusMethods.stored) {
       const textarea = document.getElementById('send_textarea');
       const input = document.querySelector('#send_form input');
@@ -428,18 +424,17 @@
       originalFocusMethods.stored = true;
     }
 
-    // Intercept focus events
     document.addEventListener('focus', function(e) {
       if (!settings.autoShowKeyboard) {
         const target = e.target;
-        if (target.id === 'send_textarea' || 
+        if (target.id === 'send_textarea' ||
             (target.tagName === 'INPUT' && target.closest('#send_form'))) {
-          // Allow focus only if user explicitly clicked
           if (!e.isTrusted) {
             e.preventDefault();
             e.stopPropagation();
             if (settings.debug) {
-              console.log('[MOP] Blocked programmatic focus');            }
+              console.log('[MOP] Blocked programmatic focus');
+            }
           }
         }
       }
@@ -449,7 +444,7 @@
   // ─── Viewport Lock ───────────────────────────────────────────────────────────
   function setupViewportLock() {
     const visualViewport = window.visualViewport;
-    
+
     document.body.classList.remove('mop-viewport-locked', 'mop-prevent-shift');
     document.body.style.height = '';
     document.body.style.overflow = '';
@@ -478,17 +473,18 @@
       const viewportHeight = visualViewport.height;
       const windowHeight = window.innerHeight;
       const isKeyboardOpen = viewportHeight < windowHeight * 0.75;
-      
+
       if (isKeyboardOpen !== keyboardOpen) {
         keyboardOpen = isKeyboardOpen;
-        
+
         if (keyboardOpen) {
           document.body.classList.add('mop-viewport-locked');
           document.body.style.height = `${viewportHeight}px`;
           document.body.style.overflow = 'hidden';
-          
+
           setTimeout(() => {
-            const chat = document.getElementById('chat');            if (chat) {
+            const chat = document.getElementById('chat');
+            if (chat) {
               chat.scrollTop = chat.scrollHeight;
             }
             window.scrollTo(0, 0);
@@ -505,11 +501,11 @@
       visualViewport.removeEventListener('resize', window.mopViewportHandler);
       visualViewport.removeEventListener('scroll', window.mopViewportHandler);
     }
-    
+
     visualViewport.addEventListener('resize', handleResize);
     visualViewport.addEventListener('scroll', handleResize);
     window.mopViewportHandler = handleResize;
-    
+
     handleResize();
   }
 
@@ -537,7 +533,8 @@
         archivedNodes.set(msg, {
           html: msg.innerHTML,
           dataset: { ...msg.dataset },
-          attributes: {}        });
+          attributes: {}
+        });
 
         for (const attr of msg.attributes) {
           if (!['class', 'style', 'data-archived'].includes(attr.name)) {
@@ -585,10 +582,11 @@
     if (!settings.lazyProfile) return;
 
     const profileImages = document.querySelectorAll('.avatar img, .mes_avatar img, [class*="profile"] img');
-    
-    profileImages.forEach(img => {      if (!img.classList.contains('mop-lazy-loaded')) {
+
+    profileImages.forEach(img => {
+      if (!img.classList.contains('mop-lazy-loaded')) {
         img.classList.add('mop-lazy-loaded');
-        
+
         if ('IntersectionObserver' in window) {
           const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -635,7 +633,8 @@
     btn.id = 'mop-floating-btn';
     btn.innerHTML = '📱';
     btn.title = 'Mobile Optimizer Pro - Click to open settings';
-    btn.style.cssText = `      position: fixed;
+    btn.style.cssText = `
+      position: fixed;
       bottom: 80px;
       right: 20px;
       width: 48px;
@@ -664,10 +663,18 @@
     };
 
     btn.onclick = () => {
-      if (typeof toastr !== 'undefined') {
-        toastr.info('Click the Extensions icon (puzzle piece) → Find "Mobile Optimizer Pro" → Click Settings', EXT_DISPLAY);
+      // Toggle the settings panel drawer
+      const drawer = document.querySelector('#mop-panel .inline-drawer-content');
+      if (drawer) {
+        const isHidden = drawer.style.display === 'none' || drawer.style.display === '';
+        drawer.style.display = isHidden ? 'block' : 'none';
+        // Scroll to settings panel
+        const panel = document.getElementById('mop-panel');
+        if (panel && isHidden) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else {
-        alert('Mobile Optimizer Pro:\n\n1. Click Extensions icon (puzzle piece)\n2. Find "Mobile Optimizer Pro"\n3. Click Settings icon');
+        if (typeof toastr !== 'undefined') {
+          toastr.info('Click the Extensions icon → Find "Mobile Optimizer Pro"', EXT_DISPLAY);
+        }
       }
     };
 
@@ -684,7 +691,8 @@
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);    const a = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
     a.href = url;
     a.download = `mobile-optimizer-pro-settings-${Date.now()}.json`;
     document.body.appendChild(a);
@@ -699,26 +707,26 @@
 
   function importSettings(file) {
     const reader = new FileReader();
-    
+
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target.result);
-        
+
         if (data.settings) {
           settings = { ...DEFAULTS, ...data.settings };
         }
-        
+
         if (data.chatOverrides) {
           chatOverrides = data.chatOverrides;
         }
-        
+
         saveSettings();
         applyAll();
-        
+
         if (typeof toastr !== 'undefined') {
           toastr.success('Settings imported successfully!', EXT_DISPLAY);
         }
-        
+
         location.reload();
       } catch (err) {
         console.error(`[${EXT_DISPLAY}] Import failed:`, err);
@@ -727,20 +735,230 @@
         }
       }
     };
-    
+
     reader.readAsText(file);
+  }
+
+  // ─── Create Settings Panel (inject into ST sidebar like LumiPulse) ───────────
+  function createSettingsPanel() {
+    if (document.getElementById('mop-panel')) return;
+
+    const panel = document.createElement('div');
+    panel.id = 'mop-panel';
+    panel.className = 'inline-drawer';
+    panel.innerHTML = `
+      <div class="inline-drawer-toggle inline-drawer-header">
+        <b style="color:#4a9eff;">📱 Mobile Optimizer Pro</b>
+        <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+      </div>
+      <div class="inline-drawer-content" id="mobile_optimizer_pro_settings" style="display:none; padding:12px;">
+
+        <!-- Main Toggle -->
+        <div style="margin-bottom:12px;">
+          <label style="display:flex;align-items:center;gap:8px;font-weight:bold;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mop-enabled">
+            <span>Enable Mobile Optimizer</span>
+          </label>
+          <p style="font-size:11px;opacity:0.6;margin:3px 0 0 24px;">Master switch for all optimizations</p>
+        </div>
+
+        <!-- Performance Stats -->
+        <div style="background:rgba(74,158,255,0.08);border:1px solid rgba(74,158,255,0.2);border-radius:8px;padding:10px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:bold;margin-bottom:8px;color:#4a9eff;text-transform:uppercase;letter-spacing:0.5px;">📊 Real-time Performance</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">
+            <div>DOM Nodes: <span id="mop-dom-count" style="color:#4a9eff;font-weight:bold;">0</span></div>
+            <div>Archived: <span id="mop-archived-count" style="color:#4a9eff;font-weight:bold;">0</span></div>
+            <div>Memory Saved: <span id="mop-memory-saved" style="color:#4a9eff;font-weight:bold;">0 MB</span></div>
+            <div>Device: <span id="mop-device-perf" style="color:#fbbf24;font-weight:bold;">-</span></div>
+          </div>
+        </div>
+
+        <!-- Core Settings -->
+        <div style="font-size:11px;font-weight:bold;margin-bottom:8px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px;">⚙️ Core Optimization</div>
+
+        <div style="margin-bottom:7px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mop-auto-detect">
+            <span>Auto-detect Device Performance</span>
+          </label>
+          <p style="font-size:11px;opacity:0.6;margin:2px 0 0 24px;">Automatically adjust threshold based on device speed</p>
+        </div>
+
+        <div style="margin-bottom:7px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mop-virtualize">
+            <span>Smart Message Virtualization</span>
+          </label>
+          <p style="font-size:11px;opacity:0.6;margin:2px 0 0 24px;">Archive old messages to reduce DOM load</p>
+        </div>
+
+        <div style="margin-bottom:10px;font-size:13px;">
+          <label style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span>Messages to Keep Visible:</span>
+            <input type="range" id="mop-threshold" min="5" max="30" value="12" style="flex:1;min-width:100px;">
+            <span id="mop-threshold-value" style="color:#4a9eff;font-weight:bold;min-width:20px;">12</span>
+          </label>
+        </div>
+
+        <div style="margin-bottom:7px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mop-lock-viewport">
+            <span>Lock Viewport on Keyboard Open</span>
+          </label>
+          <p style="font-size:11px;opacity:0.6;margin:2px 0 0 24px;">Prevents black screen/lag when keyboard appears</p>
+        </div>
+
+        <div style="margin-bottom:7px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mop-prevent-shift">
+            <span>Prevent Keyboard Shift (No Lag Mode)</span>
+          </label>
+          <p style="font-size:11px;opacity:0.6;margin:2px 0 0 24px;">ไม่เลื่อนช่องพิมพ์ขึ้นเมื่อแป้นพิมพ์เปิด - ลดการแล็ค แต่ช่องพิมพ์อาจถูกบัง</p>
+        </div>
+
+        <div style="margin-bottom:7px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mop-auto-show-keyboard">
+            <span>Auto-show Keyboard on Chat Load</span>
+          </label>
+          <p style="font-size:11px;opacity:0.6;margin:2px 0 0 24px;">เปิด = คีย์บอร์ดเด้งขึ้นมาเองเมื่อเข้าแชท | ปิด = ต้องกดช่องพิมพ์เองเท่านั้น</p>
+        </div>
+
+        <div style="margin-bottom:7px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mop-strip-animations">
+            <span>Disable Animations &amp; Transitions</span>
+          </label>
+        </div>
+
+        <div style="margin-bottom:7px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mop-hide-avatars">
+            <span>Hide Avatars</span>
+          </label>
+          <p style="font-size:11px;opacity:0.6;margin:2px 0 0 24px;">Reduces image loading overhead</p>
+        </div>
+
+        <div style="margin-bottom:7px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mop-lazy-load">
+            <span>Enforce Lazy Loading for Images</span>
+          </label>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mop-lazy-profile">
+            <span>Lazy Load Profile/Avatar Images</span>
+          </label>
+          <p style="font-size:11px;opacity:0.6;margin:2px 0 0 24px;">Load profile pictures only when visible</p>
+        </div>
+
+        <!-- Extension Manager -->
+        <div style="font-size:11px;font-weight:bold;margin-bottom:8px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px;">🧩 Extension CSS Optimizer</div>
+        <p style="font-size:11px;opacity:0.6;margin:0 0 8px;">Select which extensions to optimize (disable heavy CSS)</p>
+
+        <div style="display:flex;gap:5px;margin-bottom:7px;">
+          <button id="mop-select-all" style="font-size:11px;padding:4px 10px;cursor:pointer;border-radius:4px;">Select All</button>
+          <button id="mop-select-none" style="font-size:11px;padding:4px 10px;cursor:pointer;border-radius:4px;">Select None</button>
+          <button id="mop-refresh-ext" style="font-size:11px;padding:4px 10px;cursor:pointer;border-radius:4px;">🔄 Refresh</button>
+        </div>
+
+        <div id="mop-ext-list" style="max-height:130px;overflow-y:auto;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:8px;margin-bottom:12px;font-size:12px;">
+          <div style="opacity:0.5;">Loading extensions...</div>
+        </div>
+
+        <!-- Per-Chat Settings -->
+        <div style="font-size:11px;font-weight:bold;margin-bottom:8px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px;">💬 Per-Chat Settings</div>
+        <p style="font-size:11px;opacity:0.6;margin:0 0 8px;">Override settings for specific chats</p>
+
+        <div style="margin-bottom:7px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mop-per-chat">
+            <span>Enable Per-Chat Overrides</span>
+          </label>
+        </div>
+
+        <div id="mop-chat-overrides" style="display:none;background:rgba(255,255,255,0.05);border-radius:6px;padding:8px;margin-bottom:12px;">
+          <div style="font-size:12px;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="opacity:0.7;">Current Chat:</span>
+            <span id="mop-current-chat-name" style="color:#4a9eff;font-weight:bold;">-</span>
+            <button id="mop-save-chat-override" style="font-size:11px;padding:3px 8px;cursor:pointer;border-radius:4px;">Save Override</button>
+          </div>
+          <label style="font-size:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span>Override Threshold:</span>
+            <input type="range" id="mop-chat-threshold" min="5" max="30" value="12" style="flex:1;min-width:80px;">
+            <span id="mop-chat-threshold-value" style="color:#4a9eff;font-weight:bold;min-width:20px;">12</span>
+          </label>
+        </div>
+
+        <!-- Theme Support -->
+        <div style="font-size:11px;font-weight:bold;margin-bottom:8px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px;">🎨 Theme Support</div>
+
+        <div style="margin-bottom:7px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mop-theme-detect">
+            <span>Auto-detect Current Theme</span>
+          </label>
+        </div>
+
+        <div style="margin-bottom:12px;font-size:12px;opacity:0.8;">
+          Current Theme: <span id="mop-current-theme" style="color:#4a9eff;font-weight:bold;">-</span>
+        </div>
+
+        <!-- Advanced Settings -->
+        <div style="font-size:11px;font-weight:bold;margin-bottom:8px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px;">🔧 Advanced Settings</div>
+
+        <div style="margin-bottom:7px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mop-aggressive-css">
+            <span>Aggressive CSS Stripping</span>
+          </label>
+          <p style="font-size:11px;opacity:0.6;margin:2px 0 0 24px;">Remove backdrop-filter, box-shadow, and heavy effects</p>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mop-debug">
+            <span>Debug Mode</span>
+          </label>
+          <p style="font-size:11px;opacity:0.6;margin:2px 0 0 24px;">Show detailed logs in console</p>
+        </div>
+
+        <!-- Export/Import -->
+        <div style="font-size:11px;font-weight:bold;margin-bottom:8px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px;">💾 Export / Import Settings</div>
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <button id="mop-export" style="flex:1;padding:7px;cursor:pointer;font-size:12px;border-radius:6px;">📤 Export</button>
+          <button id="mop-import" style="flex:1;padding:7px;cursor:pointer;font-size:12px;border-radius:6px;">📥 Import</button>
+          <input type="file" id="mop-import-file" accept=".json" style="display:none;">
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display:flex;gap:6px;">
+          <button id="mop-apply" style="flex:1;padding:9px;cursor:pointer;font-weight:bold;font-size:13px;background:linear-gradient(135deg,#4a9eff,#6c5ce7);color:white;border:none;border-radius:8px;">✅ Apply Settings</button>
+          <button id="mop-reset" style="flex:1;padding:9px;cursor:pointer;font-size:13px;border-radius:8px;">🔄 Reset</button>
+        </div>
+
+      </div>
+    `;
+
+    const target = document.getElementById('extensions_settings');
+    if (target) {
+      target.appendChild(panel);
+    }
   }
 
   // ─── Settings UI ─────────────────────────────────────────────────────────────
   function initSettingsUI() {
-    const checkInterval = setInterval(() => {      const settingsPanel = document.getElementById('mobile_optimizer_pro_settings');
+    const checkInterval = setInterval(() => {
+      const settingsPanel = document.getElementById('mobile_optimizer_pro_settings');
       if (settingsPanel) {
         clearInterval(checkInterval);
         setupSettingsPanel(settingsPanel);
       }
     }, 100);
 
-    setTimeout(() => clearInterval(checkInterval), 5000);
+    setTimeout(() => clearInterval(checkInterval), 10000);
   }
 
   function setupSettingsPanel(panel) {
@@ -782,13 +1000,13 @@
         thresholdValue.textContent = threshold.value;
       });
     }
+
     const perChatCheckbox = panel.querySelector('#mop-per-chat');
     const chatOverridesDiv = panel.querySelector('#mop-chat-overrides');
     if (perChatCheckbox && chatOverridesDiv) {
       perChatCheckbox.addEventListener('change', () => {
         chatOverridesDiv.style.display = perChatCheckbox.checked ? 'block' : 'none';
       });
-      
       if (settings.perChat) {
         chatOverridesDiv.style.display = 'block';
       }
@@ -831,7 +1049,8 @@
     }
 
     if (resetBtn) {
-      resetBtn.addEventListener('click', () => {        if (confirm('Are you sure you want to reset all settings to defaults?')) {
+      resetBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to reset all settings to defaults?')) {
           settings = { ...DEFAULTS };
           chatOverrides = {};
           saveSettings();
@@ -880,7 +1099,8 @@
       exportBtn.addEventListener('click', exportSettings);
     }
 
-    if (importBtn && importFile) {      importBtn.addEventListener('click', () => importFile.click());
+    if (importBtn && importFile) {
+      importBtn.addEventListener('click', () => importFile.click());
       importFile.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
           importSettings(e.target.files[0]);
@@ -900,24 +1120,16 @@
     if (!listEl) return;
 
     if (extensionList.length === 0) {
-      listEl.innerHTML = '<div class="mop-loading">No extensions detected</div>';
+      listEl.innerHTML = '<div style="opacity:0.5;">No extensions detected</div>';
       return;
     }
 
     listEl.innerHTML = '';
     extensionList.forEach(ext => {
-      const item = document.createElement('div');
-      item.className = 'mop-ext-item';
-
+      const item = document.createElement('label');
+      item.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:5px;cursor:pointer;font-size:12px;';
       const isChecked = settings.optimizedExtensions.includes(ext.name);
-
-      item.innerHTML = `
-        <label>
-          <input type="checkbox" class="mop-checkbox mop-ext-checkbox" data-ext="${ext.name}" ${isChecked ? 'checked' : ''}>
-          <span class="mop-ext-name">${ext.displayName}</span>
-        </label>
-      `;
-
+      item.innerHTML = `<input type="checkbox" class="mop-ext-checkbox" data-ext="${ext.name}" ${isChecked ? 'checked' : ''}> ${ext.displayName}`;
       listEl.appendChild(item);
     });
   }
@@ -929,7 +1141,8 @@
       virtualize: '#mop-virtualize',
       threshold: '#mop-threshold',
       lockViewport: '#mop-lock-viewport',
-      preventKeyboardShift: '#mop-prevent-shift',      autoShowKeyboard: '#mop-auto-show-keyboard',
+      preventKeyboardShift: '#mop-prevent-shift',
+      autoShowKeyboard: '#mop-auto-show-keyboard',
       stripAnimations: '#mop-strip-animations',
       hideAvatars: '#mop-hide-avatars',
       lazyLoad: '#mop-lazy-load',
@@ -978,7 +1191,8 @@
     }
 
     applyChatOverride();
-    injectCSS();    setupViewportLock();
+    injectCSS();
+    setupViewportLock();
     preventAutoFocus();
 
     document.body.classList.toggle('mop-no-anim', settings.stripAnimations);
@@ -1022,12 +1236,14 @@
   function init() {
     loadSettings();
     detectExtensions();
+    createSettingsPanel();
 
     setTimeout(() => {
       applyAll();
       initSTListeners();
       initSettingsUI();
-      createFloatingButton();    }, 800);
+      createFloatingButton();
+    }, 800);
   }
 
   if (document.readyState === 'loading') {
@@ -1035,4 +1251,5 @@
   } else {
     init();
   }
+
 })();
