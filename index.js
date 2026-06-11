@@ -1,6 +1,6 @@
-// Mobile Optimizer Pro v2.0 - Complete Extension
+// Mobile Optimizer Pro v2.1 - Complete Extension
 // Features: Auto-detect, Per-Chat, Theme Support, Export/Import, Lazy Load Profile
-// Floating Button, Prevent Keyboard Shift Mode
+// Floating Button, Prevent Keyboard Shift, Auto-show Keyboard Control
 
 (function () {
   'use strict';
@@ -18,6 +18,7 @@
     threshold: 12,
     lockViewport: true,
     preventKeyboardShift: false,
+    autoShowKeyboard: false,  // เพิ่ม: false = ไม่เด้งคีย์บอร์ดอัตโนมัติ
     stripAnimations: true,
     hideAvatars: false,
     lazyLoad: true,
@@ -36,6 +37,7 @@
   let statsInterval = null;
   let currentChatId = null;
   let devicePerformance = 'medium';
+  let originalFocusMethods = {};
 
   // ─── Settings Management ─────────────────────────────────────────────────────
   function loadSettings() {
@@ -45,9 +47,9 @@
       
       const savedOverrides = localStorage.getItem(CHAT_OVERRIDES_KEY);
       chatOverrides = savedOverrides ? JSON.parse(savedOverrides) : {};
-    } catch (e) {
-      console.error(`[${EXT_DISPLAY}] Failed to load settings:`, e);
-      settings = { ...DEFAULTS };      chatOverrides = {};
+    } catch (e) {      console.error(`[${EXT_DISPLAY}] Failed to load settings:`, e);
+      settings = { ...DEFAULTS };
+      chatOverrides = {};
     }
   }
 
@@ -94,8 +96,8 @@
     }
 
     if (settings.debug) {
-      console.log(`[${EXT_DISPLAY}] Device performance: ${devicePerformance} (${duration.toFixed(2)}ms)`);
-    }
+      console.log(`[${EXT_DISPLAY}] Device performance: ${devicePerformance} (${duration.toFixed(2)}ms)`);    }
+
     updatePerformanceDisplay();
   }
 
@@ -144,8 +146,8 @@
       console.log(`[${EXT_DISPLAY}] Detected theme: ${themeName}`);
     }
   }
-
-  // ─── Per-Chat Settings ───────────────────────────────────────────────────────  function getCurrentChatId() {
+  // ─── Per-Chat Settings ───────────────────────────────────────────────────────
+  function getCurrentChatId() {
     if (typeof SillyTavern !== 'undefined' && SillyTavern.getContext) {
       const ctx = SillyTavern.getContext();
       return ctx.chatId || null;
@@ -192,9 +194,9 @@
   // ─── Extension Detection ─────────────────────────────────────────────────────
   function detectExtensions() {
     extensionList = [];
-    
-    if (typeof SillyTavern !== 'undefined' && SillyTavern.getContext) {
-      const ctx = SillyTavern.getContext();      if (ctx.extensionSettings) {
+        if (typeof SillyTavern !== 'undefined' && SillyTavern.getContext) {
+      const ctx = SillyTavern.getContext();
+      if (ctx.extensionSettings) {
         Object.keys(ctx.extensionSettings).forEach(extName => {
           if (extName !== EXT_ID) {
             extensionList.push({
@@ -242,8 +244,8 @@
       styleEl.id = 'mop-optimized-css';
       document.head.appendChild(styleEl);
     }
-
-    let css = `      /* Core Performance */
+    let css = `
+      /* Core Performance */
       #chat {
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
@@ -290,9 +292,9 @@
         width: 100% !important;
         height: 100vh !important;
         overflow: hidden !important;
-        top: 0 !important;
-        left: 0 !important;
+        top: 0 !important;        left: 0 !important;
       }
+
       .mop-keyboard-fix #send_form,
       .mop-keyboard-fix #chat {
         position: relative !important;
@@ -329,19 +331,25 @@
           height: -webkit-fill-available !important;
         }
       }
+
+      /* Prevent Auto-focus */
+      .mop-no-auto-focus #send_textarea:focus,
+      .mop-no-auto-focus #send_form input:focus {
+        outline: none;
+      }
     `;
 
     if (settings.aggressiveCss && settings.optimizedExtensions.length > 0) {
       const extSelectors = settings.optimizedExtensions.map(ext => {
-        return `[id*="${ext}"], [class*="${ext}"]`;
-      }).join(', ');
+        return `[id*="${ext}"], [class*="${ext}"]`;      }).join(', ');
 
       if (extSelectors) {
         css += `
           ${extSelectors} {
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
-            filter: none !important;            box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+            filter: none !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
             background-attachment: scroll !important;
           }
         `;
@@ -381,6 +389,63 @@
     styleEl.textContent = css;
   }
 
+  // ─── Prevent Auto-focus ──────────────────────────────────────────────────────
+  function preventAutoFocus() {    if (settings.autoShowKeyboard) {
+      // Restore original focus behavior
+      if (originalFocusMethods.restore) {
+        originalFocusMethods.restore();
+      }
+      document.body.classList.remove('mop-no-auto-focus');
+      return;
+    }
+
+    // Prevent auto-focus on textarea and inputs
+    document.body.classList.add('mop-no-auto-focus');
+
+    // Store original methods
+    if (!originalFocusMethods.stored) {
+      const textarea = document.getElementById('send_textarea');
+      const input = document.querySelector('#send_form input');
+
+      if (textarea) {
+        originalFocusMethods.textarea = textarea.focus;
+        textarea.focus = function() {
+          if (settings.debug) {
+            console.log('[MOP] Blocked auto-focus on textarea');
+          }
+        };
+      }
+
+      if (input) {
+        originalFocusMethods.input = input.focus;
+        input.focus = function() {
+          if (settings.debug) {
+            console.log('[MOP] Blocked auto-focus on input');
+          }
+        };
+      }
+
+      originalFocusMethods.stored = true;
+    }
+
+    // Intercept focus events
+    document.addEventListener('focus', function(e) {
+      if (!settings.autoShowKeyboard) {
+        const target = e.target;
+        if (target.id === 'send_textarea' || 
+            (target.tagName === 'INPUT' && target.closest('#send_form'))) {
+          // Allow focus only if user explicitly clicked
+          if (!e.isTrusted) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (settings.debug) {
+              console.log('[MOP] Blocked programmatic focus');            }
+          }
+        }
+      }
+    }, true);
+  }
+
   // ─── Viewport Lock ───────────────────────────────────────────────────────────
   function setupViewportLock() {
     const visualViewport = window.visualViewport;
@@ -390,7 +455,8 @@
     document.body.style.overflow = '';
 
     if (!settings.lockViewport) {
-      if (window.mopViewportHandler && visualViewport) {        visualViewport.removeEventListener('resize', window.mopViewportHandler);
+      if (window.mopViewportHandler && visualViewport) {
+        visualViewport.removeEventListener('resize', window.mopViewportHandler);
         visualViewport.removeEventListener('scroll', window.mopViewportHandler);
       }
       return;
@@ -422,8 +488,7 @@
           document.body.style.overflow = 'hidden';
           
           setTimeout(() => {
-            const chat = document.getElementById('chat');
-            if (chat) {
+            const chat = document.getElementById('chat');            if (chat) {
               chat.scrollTop = chat.scrollHeight;
             }
             window.scrollTo(0, 0);
@@ -439,7 +504,8 @@
     if (window.mopViewportHandler) {
       visualViewport.removeEventListener('resize', window.mopViewportHandler);
       visualViewport.removeEventListener('scroll', window.mopViewportHandler);
-    }    
+    }
+    
     visualViewport.addEventListener('resize', handleResize);
     visualViewport.addEventListener('scroll', handleResize);
     window.mopViewportHandler = handleResize;
@@ -471,8 +537,7 @@
         archivedNodes.set(msg, {
           html: msg.innerHTML,
           dataset: { ...msg.dataset },
-          attributes: {}
-        });
+          attributes: {}        });
 
         for (const attr of msg.attributes) {
           if (!['class', 'style', 'data-archived'].includes(attr.name)) {
@@ -488,6 +553,7 @@
 
     updateStats();
   }
+
   function restoreAllArchived() {
     archivedNodes.forEach((data, node) => {
       if (node.classList.contains('mop-archived')) {
@@ -520,8 +586,7 @@
 
     const profileImages = document.querySelectorAll('.avatar img, .mes_avatar img, [class*="profile"] img');
     
-    profileImages.forEach(img => {
-      if (!img.classList.contains('mop-lazy-loaded')) {
+    profileImages.forEach(img => {      if (!img.classList.contains('mop-lazy-loaded')) {
         img.classList.add('mop-lazy-loaded');
         
         if ('IntersectionObserver' in window) {
@@ -537,6 +602,7 @@
               }
             });
           }, { rootMargin: '50px' });
+
           observer.observe(img);
         } else {
           img.setAttribute('loading', 'lazy');
@@ -569,8 +635,7 @@
     btn.id = 'mop-floating-btn';
     btn.innerHTML = '📱';
     btn.title = 'Mobile Optimizer Pro - Click to open settings';
-    btn.style.cssText = `
-      position: fixed;
+    btn.style.cssText = `      position: fixed;
       bottom: 80px;
       right: 20px;
       width: 48px;
@@ -587,6 +652,7 @@
       font-size: 24px;
       border: 2px solid rgba(255,255,255,0.2);
     `;
+
     btn.onmouseover = () => {
       btn.style.transform = 'scale(1.1)';
       btn.style.boxShadow = '0 6px 16px rgba(74, 158, 255, 0.6)';
@@ -611,15 +677,14 @@
   // ─── Export/Import ───────────────────────────────────────────────────────────
   function exportSettings() {
     const exportData = {
-      version: '2.0.0',
+      version: '2.1.0',
       timestamp: new Date().toISOString(),
       settings: settings,
       chatOverrides: chatOverrides
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const url = URL.createObjectURL(blob);    const a = document.createElement('a');
     a.href = url;
     a.download = `mobile-optimizer-pro-settings-${Date.now()}.json`;
     document.body.appendChild(a);
@@ -635,7 +700,8 @@
   function importSettings(file) {
     const reader = new FileReader();
     
-    reader.onload = (e) => {      try {
+    reader.onload = (e) => {
+      try {
         const data = JSON.parse(e.target.result);
         
         if (data.settings) {
@@ -667,8 +733,7 @@
 
   // ─── Settings UI ─────────────────────────────────────────────────────────────
   function initSettingsUI() {
-    const checkInterval = setInterval(() => {
-      const settingsPanel = document.getElementById('mobile_optimizer_pro_settings');
+    const checkInterval = setInterval(() => {      const settingsPanel = document.getElementById('mobile_optimizer_pro_settings');
       if (settingsPanel) {
         clearInterval(checkInterval);
         setupSettingsPanel(settingsPanel);
@@ -684,7 +749,9 @@
       autoDetect: '#mop-auto-detect',
       virtualize: '#mop-virtualize',
       threshold: '#mop-threshold',
-      lockViewport: '#mop-lock-viewport',      preventKeyboardShift: '#mop-prevent-shift',
+      lockViewport: '#mop-lock-viewport',
+      preventKeyboardShift: '#mop-prevent-shift',
+      autoShowKeyboard: '#mop-auto-show-keyboard',
       stripAnimations: '#mop-strip-animations',
       hideAvatars: '#mop-hide-avatars',
       lazyLoad: '#mop-lazy-load',
@@ -715,7 +782,6 @@
         thresholdValue.textContent = threshold.value;
       });
     }
-
     const perChatCheckbox = panel.querySelector('#mop-per-chat');
     const chatOverridesDiv = panel.querySelector('#mop-chat-overrides');
     if (perChatCheckbox && chatOverridesDiv) {
@@ -733,6 +799,7 @@
     if (currentChatNameEl) {
       currentChatNameEl.textContent = currentChatId || 'Unknown';
     }
+
     const chatThreshold = panel.querySelector('#mop-chat-threshold');
     const chatThresholdValue = panel.querySelector('#mop-chat-threshold-value');
     if (chatThreshold && chatThresholdValue) {
@@ -764,8 +831,7 @@
     }
 
     if (resetBtn) {
-      resetBtn.addEventListener('click', () => {
-        if (confirm('Are you sure you want to reset all settings to defaults?')) {
+      resetBtn.addEventListener('click', () => {        if (confirm('Are you sure you want to reset all settings to defaults?')) {
           settings = { ...DEFAULTS };
           chatOverrides = {};
           saveSettings();
@@ -782,7 +848,8 @@
 
     if (selectNoneBtn) {
       selectNoneBtn.addEventListener('click', () => {
-        panel.querySelectorAll('.mop-ext-checkbox').forEach(cb => cb.checked = false);      });
+        panel.querySelectorAll('.mop-ext-checkbox').forEach(cb => cb.checked = false);
+      });
     }
 
     if (refreshBtn) {
@@ -813,8 +880,7 @@
       exportBtn.addEventListener('click', exportSettings);
     }
 
-    if (importBtn && importFile) {
-      importBtn.addEventListener('click', () => importFile.click());
+    if (importBtn && importFile) {      importBtn.addEventListener('click', () => importFile.click());
       importFile.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
           importSettings(e.target.files[0]);
@@ -832,6 +898,7 @@
   function renderExtensionList(panel) {
     const listEl = panel.querySelector('#mop-ext-list');
     if (!listEl) return;
+
     if (extensionList.length === 0) {
       listEl.innerHTML = '<div class="mop-loading">No extensions detected</div>';
       return;
@@ -862,7 +929,7 @@
       virtualize: '#mop-virtualize',
       threshold: '#mop-threshold',
       lockViewport: '#mop-lock-viewport',
-      preventKeyboardShift: '#mop-prevent-shift',
+      preventKeyboardShift: '#mop-prevent-shift',      autoShowKeyboard: '#mop-auto-show-keyboard',
       stripAnimations: '#mop-strip-animations',
       hideAvatars: '#mop-hide-avatars',
       lazyLoad: '#mop-lazy-load',
@@ -880,7 +947,8 @@
           settings[key] = el.checked;
         } else if (el.type === 'range') {
           settings[key] = parseInt(el.value);
-        }      }
+        }
+      }
     });
 
     settings.optimizedExtensions = [];
@@ -895,7 +963,7 @@
   function applyAll() {
     if (!settings.enabled) {
       restoreAllArchived();
-      document.body.classList.remove('mop-viewport-locked', 'mop-no-anim', 'mop-hide-avatars', 'mop-lazy-profile', 'mop-prevent-shift');
+      document.body.classList.remove('mop-viewport-locked', 'mop-no-anim', 'mop-hide-avatars', 'mop-lazy-profile', 'mop-prevent-shift', 'mop-no-auto-focus');
       document.body.style.height = '';
       document.body.style.overflow = '';
       if (window.mopViewportHandler && window.visualViewport) {
@@ -910,8 +978,8 @@
     }
 
     applyChatOverride();
-    injectCSS();
-    setupViewportLock();
+    injectCSS();    setupViewportLock();
+    preventAutoFocus();
 
     document.body.classList.toggle('mop-no-anim', settings.stripAnimations);
     document.body.classList.toggle('mop-hide-avatars', settings.hideAvatars);
@@ -929,6 +997,7 @@
   // ─── SillyTavern Event Listeners ─────────────────────────────────────────────
   function initSTListeners() {
     if (typeof eventSource === 'undefined') return;
+
     eventSource.on('MESSAGE_RECEIVED', () => {
       setTimeout(() => {
         virtualizeChat();
@@ -949,7 +1018,7 @@
     });
   }
 
-  // ─── Initialize ──────────────────────────────────────────────────────────────
+  // ─── Initialize ─────────────────────────────────────────────────────────────
   function init() {
     loadSettings();
     detectExtensions();
@@ -958,8 +1027,7 @@
       applyAll();
       initSTListeners();
       initSettingsUI();
-      createFloatingButton();
-    }, 800);
+      createFloatingButton();    }, 800);
   }
 
   if (document.readyState === 'loading') {
